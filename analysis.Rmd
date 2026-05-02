@@ -1,0 +1,116 @@
+---
+title: "Gene Expression Variability Analysis (GSE15852)"
+author: "Mohit Swami"
+date: "2026-05-02"
+output:
+  html_document: default
+  html_document ---------------------: default
+---
+## Introduction
+
+Gene expression profiling provides insights into molecular variability across biological samples and is widely used to study disease mechanisms. In this study, publicly available microarray data was analyzed to explore gene expression distribution and identify highly variable genes.
+
+---
+
+## Methods
+
+Gene expression data (GSE15852) was obtained from the Gene Expression Omnibus (GEO).
+Data preprocessing included cleaning, conversion to numeric format, and assignment of gene identifiers.
+
+Exploratory analysis included:
+
+* Distribution of gene expression
+* Sample comparison
+* Identification of highly variable genes
+
+---
+
+## Data Processing
+
+```{r}
+data <- read.table("GSE15852_series_matrix.txt.gz",
+                   skip = 100,
+                   header = FALSE,
+                   sep = "\t",
+                   fill = TRUE,
+                   quote = "")
+
+colnames(data) <- data[1, ]
+data <- data[-1, ]
+
+gene_ids <- gsub('"', '', data[,1])
+
+expr <- data[, -1]
+expr <- apply(expr, 2, as.numeric)
+
+rownames(expr) <- gene_ids
+
+dim(expr)
+```
+
+---
+
+## Results
+
+### Gene Expression Distribution
+
+```{r}
+hist(expr[,1],
+     main="Gene Expression Distribution",
+     xlab="Expression Level")
+```
+
+---
+
+### Sample Comparison
+
+```{r}
+plot(expr[,1], expr[,2],
+     xlab="Sample 1",
+     ylab="Sample 2",
+     main="Sample Comparison")
+```
+
+---
+
+### Highly Variable Genes
+
+```{r}
+gene_var <- apply(expr, 1, var, na.rm=TRUE)
+
+top_genes <- names(sort(gene_var, decreasing=TRUE))[1:20]
+
+top_genes
+```
+
+---
+
+### Gene Mapping
+
+```{r, message=FALSE, warning=FALSE}
+library(hgu133a.db)
+
+mapped <- mapIds(hgu133a.db,
+                 keys = top_genes,
+                 column = "SYMBOL",
+                 keytype = "PROBEID",
+                 multiVals = "first")
+
+data.frame(Probe = names(mapped), Gene = mapped)
+```
+
+---
+
+## Discussion
+
+Analysis revealed a broad distribution of gene expression values and variability across samples.
+
+Several highly variable genes identified include hemoglobin genes (HBB, HBA1), ribosomal proteins (RPS3A, RPS20), and metabolic regulators (FABP4, AKR1C1, ADIPOQ).
+
+The presence of hemoglobin-related genes may reflect sample composition or microenvironmental factors. Additionally, genes involved in metabolism and cellular processes suggest biological heterogeneity across samples.
+
+---
+
+## Conclusion
+
+This exploratory analysis demonstrates how publicly available gene expression datasets can be used to identify biologically relevant patterns. Highly variable genes identified in this study may serve as candidates for further functional investigation.
